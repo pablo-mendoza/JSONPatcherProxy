@@ -61,9 +61,19 @@ const JSONPatcherProxy = (function() {
    * @param {Any} newValue the value being set
    */
   function trapForSet(instance, tree, key, newValue) {
+    const oldValue = tree[key];
     const pathToKey = getPathToTree(instance, tree) + '/' + escapePathComponent(key);
     const subtreeMetadata = instance._treeMetadataMap.get(newValue);
 
+    if (typeof oldValue !== 'undefined') {
+      const oldSubtreeMetadata = instance._treeMetadataMap.get(oldValue);
+      if (oldSubtreeMetadata) {
+        instance._parenthoodMap.delete(oldSubtreeMetadata.originalObject);
+        instance._disableTrapsForTreeMetadata(oldSubtreeMetadata);
+        instance._treeMetadataMap.delete(oldValue);
+      }
+    }
+    
     if (instance._treeMetadataMap.has(newValue)) {
       instance._parenthoodMap.set(subtreeMetadata.originalObject, { parent: tree, key });
     }
